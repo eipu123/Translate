@@ -613,4 +613,261 @@
     })();
 </script>
 </body>
+    </html>        <span class="status-text" id="statusMessage">✅ Ready</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // DOM elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const sourceLangBtn = document.getElementById('sourceLangBtn');
+        const targetLangBtn = document.getElementById('targetLangBtn');
+
+        // State
+        let isEnToMy = true;          // true = EN -> MY , false = MY -> EN
+        let isTranslating = false;
+        let lastScrollPosition = 0;
+        let isUserScrolling = false;
+
+        // helper: update button active styles
+        function updateLangButtons() {
+            if (isEnToMy) {
+                sourceLangBtn.classList.add('active');
+                targetLangBtn.classList.remove('active');
+            } else {
+                sourceLangBtn.classList.remove('active');
+                targetLangBtn.classList.add('active');
+            }
+        }
+
+        // Enhanced scrollToBottom function with multiple attempts
+        function scrollToBottom(force = true) {
+            if (!force && isUserScrolling) return;
+            
+            // Immediate scroll
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Smooth scroll fallback
+            setTimeout(() => {
+                chatMessages.scrollTo({
+                    top: chatMessages.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 10);
+            
+            // Double-check scroll after content renders
+            setTimeout(() => {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        // Detect user scrolling
+        chatMessages.addEventListener('scroll', () => {
+            const currentScroll = chatMessages.scrollTop;
+            const maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
+            
+            // If user scrolls up significantly, mark as manual scrolling
+            if (currentScroll < maxScroll - 100) {
+                isUserScrolling = true;
+            } else {
+                isUserScrolling = false;
+            }
+        });
+
+        // add message to chat (type: 'user' or 'bot')
+        function addMessage(text, type, sourceLang = '', targetLang = '') {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${type}-message`;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = text;
+
+            const info = document.createElement('div');
+            info.className = 'message-info';
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (type === 'user') {
+                const badge = document.createElement('span');
+                badge.className = 'lang-badge';
+                badge.textContent = sourceLang || (isEnToMy ? 'EN' : 'MY');
+                info.appendChild(badge);
+
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = timeStr;
+                info.appendChild(timeSpan);
+            } else {
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = timeStr;
+                info.appendChild(timeSpan);
+
+                const badge = document.createElement('span');
+                badge.className = 'lang-badge';
+                badge.textContent = targetLang || (isEnToMy ? 'MY' : 'EN');
+                info.appendChild(badge);
+            }
+
+            msgDiv.appendChild(bubble);
+            msgDiv.appendChild(info);
+            chatMessages.appendChild(msgDiv);
+
+            // Auto-scroll for new messages only if user hasn't manually scrolled up
+            scrollToBottom(false);
+        }
+
+        // typing indicator (as a bot message)
+        function showTypingIndicator() {
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.className = 'message bot-message';
+            indicatorDiv.id = 'typingIndicator';
+
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'typing-indicator';
+            typingBubble.innerHTML = '<span></span><span></span><span></span>';
+
+            indicatorDiv.appendChild(typingBubble);
+            chatMessages.appendChild(indicatorDiv);
+            scrollToBottom(false);
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        // translation using MyMemory (supports en<>my)
+        async function translateText(text) {
+            const from = isEnToMy ? 'en' : 'my';
+            const to = isEnToMy ? 'my' : 'en';
+
+            if (!text.trim()) return '';
+
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+                if (!response.ok) throw new Error('Network issue');
+                const data = await response.json();
+                if (data.responseData && data.responseData.translatedText) {
+                    return data.responseData.translatedText;
+                } else {
+                    return '⚠️ translation error';
+                }
+            } catch (e) {
+                console.error(e);
+                return '❌ connection failed';
+            }
+        }
+
+        // handle send
+        async function handleSendMessage() {
+            const rawMessage = userInput.value.trim();
+            if (!rawMessage || isTranslating) return;
+
+            const messageText = rawMessage;
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            // Reset user scroll flag when sending new message
+            isUserScrolling = false;
+
+            // Add user message
+            addMessage(messageText, 'user', isEnToMy ? 'EN' : 'MY');
+
+            // set translating state
+            isTranslating = true;
+            sendBtn.disabled = true;
+            statusMessage.innerText = '⏳ Translating...';
+
+            showTypingIndicator();
+
+            const translated = await translateText(messageText);
+
+            removeTypingIndicator();
+
+            // Add bot response
+            addMessage(translated, 'bot', '', isEnToMy ? 'MY' : 'EN');
+
+            isTranslating = false;
+            sendBtn.disabled = false;
+            statusMessage.innerText = '✅ Ready';
+            userInput.focus();
+
+            // Force scroll to bottom after translation completes
+            setTimeout(() => {
+                scrollToBottom(true);
+            }, 150);
+        }
+
+        // auto-resize textarea
+        function autoResize() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', handleSendMessage);
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        });
+
+        userInput.addEventListener('input', autoResize);
+
+        // language switch
+        sourceLangBtn.addEventListener('click', () => {
+            if (!isEnToMy) {
+                isEnToMy = true;
+                updateLangButtons();
+                statusMessage.innerText = '🌐 EN → MY';
+            }
+        });
+
+        targetLangBtn.addEventListener('click', () => {
+            if (isEnToMy) {
+                isEnToMy = false;
+                updateLangButtons();
+                statusMessage.innerText = '🌐 MY → EN';
+            }
+        });
+
+        // initial update
+        updateLangButtons();
+        userInput.focus();
+
+        // scroll to bottom on window load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                scrollToBottom(true);
+            }, 100);
+            userInput.focus();
+        });
+
+        // click on messages -> focus input
+        chatMessages.addEventListener('click', () => {
+            userInput.focus();
+        });
+
+        // MutationObserver to ensure scroll when content changes
+        const observer = new MutationObserver((mutations) => {
+            // Check if new messages were added and user hasn't scrolled up
+            const hasNewMessages = mutations.some(m => 
+                m.type === 'childList' && m.addedNodes.length > 0
+            );
+            
+            if (hasNewMessages && !isUserScrolling) {
+                scrollToBottom(false);
+            }
+        });
+        
+        observer.observe(chatMessages, { childList: true, subtree: true });
+    })();
+</script>
+</body>
 </html>
