@@ -3,614 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram style · EN / MY translator</title>
-    <!-- Fonts: Roboto + Padauk for Myanmar -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Padauk&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for subtle icons -->
+    <title>Telegram Style Translator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Padauk&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --tg-blue: #2481cc;
+            --tg-bg: #547594; /* Classic Telegram Background */
+            --tg-user-bubble: #effdde; /* Light green for outgoing messages */
+            --tg-bot-bubble: #ffffff;
+            --tg-text: #000000;
+            --tg-secondary: #707579;
         }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Roboto', 'Padauk', sans-serif;
-            background: #0b1419;
+            background-color: #212121;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 12px;
         }
 
         .chat-container {
             width: 100%;
-            max-width: 800px;
-            height: 95vh;
-            max-height: 900px;
-            background: #ffffff;
-            border-radius: 24px;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2), 0 2px 10px rgba(0, 0, 0, 0.15);
+            max-width: 500px; /* Mobile focused width */
+            height: 100vh;
+            background: var(--tg-bg);
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* Pattern overlay */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             position: relative;
         }
 
+        /* --- Header Section --- */
         .chat-header {
-            background: #1a73e8;
-            color: white;
-            padding: 16px 20px;
+            background: #ffffff;
+            padding: 8px 16px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
+            gap: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            z-index: 10;
         }
 
-        .chat-header h1 {
-            font-size: 1.4rem;
-            font-weight: 500;
+        .back-btn { color: var(--tg-secondary); font-size: 1.2rem; cursor: pointer; }
+
+        .header-info { flex: 1; }
+        .header-info h2 { font-size: 1rem; color: #000; }
+        .header-info p { font-size: 0.8rem; color: var(--tg-blue); }
+
+        .lang-switch {
+            background: #f1f1f1;
+            padding: 4px;
+            border-radius: 20px;
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0;
+            gap: 2px;
         }
 
-        .chat-header h1 i {
-            font-size: 1.6rem;
-        }
-
-        .lang-toggle-group {
-            display: flex;
-            background: rgba(255,255,255,0.2);
-            border-radius: 30px;
-            padding: 3px;
-        }
-
-        .lang-toggle-btn {
-            background: transparent;
+        .lang-btn {
             border: none;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-weight: 500;
-            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            transition: 0.2s;
         }
 
-        .lang-toggle-btn.active {
-            background: white;
-            color: #1a73e8;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+        .lang-btn.active { background: var(--tg-blue); color: white; }
 
+        /* --- Messages Area --- */
         .chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 16px;
-            background: #e7e9ec;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            scroll-behavior: smooth;
+            gap: 10px;
         }
 
         .message {
-            display: flex;
-            flex-direction: column;
-            max-width: 85%;
-            animation: messageAppear 0.2s ease;
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            position: relative;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.15s ease-out;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
 
-        @keyframes messageAppear {
-            0% { opacity: 0; transform: translateY(8px); }
-            100% { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .user-message {
             align-self: flex-end;
+            background: var(--tg-user-bubble);
+            border-bottom-right-radius: 2px;
         }
 
         .bot-message {
             align-self: flex-start;
+            background: var(--tg-bot-bubble);
+            border-bottom-left-radius: 2px;
         }
 
-        .message-bubble {
-            padding: 10px 16px;
-            border-radius: 20px;
-            font-size: 1rem;
-            line-height: 1.5;
-            word-break: break-word;
-            font-family: 'Roboto', 'Padauk', sans-serif;
+        .msg-time {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            text-align: right;
+            color: #5fb389; /* Greenish time for user */
+        }
+
+        .bot-message .msg-time { color: var(--tg-secondary); }
+
+        /* --- Input Area --- */
+        .input-container {
+            padding: 10px;
+            background: transparent;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .input-wrapper {
+            background: white;
+            flex: 1;
+            border-radius: 22px;
+            padding: 8px 15px;
+            display: flex;
+            align-items: flex-end;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .user-message .message-bubble {
-            background-color: #1a73e8;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .bot-message .message-bubble {
-            background-color: white;
-            color: #111;
-            border: 1px solid #d9d9d9;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 4px;
-            font-size: 0.7rem;
-            color: #6b7a8f;
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-
-        .user-message .message-info {
-            justify-content: flex-end;
-        }
-
-        .lang-badge {
-            background: rgba(0,0,0,0.05);
-            padding: 2px 8px;
-            border-radius: 30px;
-            font-weight: 600;
-            font-size: 0.65rem;
-            color: #1a73e8;
-            background: #e9ecf3;
-        }
-
-        .user-message .lang-badge {
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 5px;
-            padding: 12px 18px;
-            background-color: white;
-            border: 1px solid #d9d9d9;
-            border-radius: 22px;
-            border-bottom-left-radius: 4px;
-            width: fit-content;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background-color: #888;
-            border-radius: 50%;
-            animation: typingBounce 1.4s infinite;
-        }
-
-        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typingBounce {
-            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-            30% { transform: translateY(-8px); opacity: 1; }
-        }
-
-        .status-area {
-            background: #f3f5f7;
-            padding: 6px 18px;
-            font-size: 0.8rem;
-            color: #4e6b85;
-            border-bottom: 1px solid #d9d9d9;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            min-height: 36px;
-        }
-
-        .status-text {
-            font-style: italic;
-        }
-
-        .input-area {
-            background: #ffffff;
-            border-top: 1px solid #d9d9d9;
-            padding: 12px 16px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            backdrop-filter: blur(10px);
-        }
-
-        .message-input-wrapper {
-            flex: 1;
-            background: #f1f3f5;
-            border-radius: 24px;
-            border: 1px solid transparent;
-            transition: border 0.2s;
-            padding: 4px 12px;
-            display: flex;
-            align-items: flex-end;
-        }
-
-        .message-input-wrapper:focus-within {
-            border-color: #1a73e8;
-            background: white;
-        }
-
         #userInput {
-            width: 100%;
+            flex: 1;
             border: none;
-            background: transparent;
-            padding: 8px 4px 8px 0;
-            font-size: 1rem;
-            font-family: 'Roboto', 'Padauk', sans-serif;
-            resize: none;
-            max-height: 120px;
-            min-height: 24px;
-            line-height: 1.5;
             outline: none;
+            padding: 5px 0;
+            font-size: 1rem;
+            max-height: 150px;
+            resize: none;
+            font-family: inherit;
         }
 
-        .send-button {
-            background: #1a73e8;
+        .icon-btn {
+            background: none;
             border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            color: white;
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: var(--tg-secondary);
+            font-size: 1.3rem;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 2px 8px rgba(26,115,232,0.3);
-            flex-shrink: 0;
+            padding: 5px;
         }
 
-        .send-button:hover {
-            background: #0d5bca;
-            transform: scale(1.05);
-        }
-
-        .send-button:disabled {
-            background: #a0c1f0;
-            box-shadow: none;
-            transform: none;
-            cursor: not-allowed;
-        }
-
-        .example-hint {
-            background: #f7f9fc;
-            padding: 6px 20px;
-            font-size: 0.8rem;
-            border-top: 1px solid #eaeef2;
-            color: #2e4b6e;
+        .send-btn {
+            background: var(--tg-blue);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
             display: flex;
-            gap: 10px;
+            justify-content: center;
             align-items: center;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
         }
 
-        .example-hint i {
-            color: #1a73e8;
-        }
+        .send-btn:active { transform: scale(0.9); }
 
-        .chat-messages::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .chat-messages::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: #b3b9c4;
-            border-radius: 20px;
-        }
-
-        .message-bubble {
-            font-family: 'Roboto', 'Padauk', sans-serif;
-        }
+        /* Custom Scrollbar */
+        .chat-messages::-webkit-scrollbar { width: 4px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
     </style>
 </head>
 <body>
+
 <div class="chat-container">
     <div class="chat-header">
-        <h1>
-            <i class="fas fa-language"></i> 
-            <span>EN / MY Translator</span>
-        </h1>
-        <div class="lang-toggle-group">
-            <button class="lang-toggle-btn active" id="sourceLangBtn">EN ➔ MY</button>
-            <button class="lang-toggle-btn" id="targetLangBtn">MY ➔ EN</button>
+        <i class="fas fa-arrow-left back-btn"></i>
+        <div class="header-info">
+            <h2 id="botName">Translator Bot</h2>
+            <p id="botStatus">online</p>
+        </div>
+        <div class="lang-switch">
+            <button class="lang-btn active" id="enMyBtn">EN</button>
+            <button class="lang-btn" id="myEnBtn">MY</button>
         </div>
     </div>
 
-    <!-- chat messages area (scrollable) -->
-    <div class="chat-messages" id="chatMessages">
-        <!-- Welcome message (bot) -->
+    <div class="chat-messages" id="chatContainer">
         <div class="message bot-message">
-            <div class="message-bubble">
-                👋 မင်္ဂလာပါ! ဘာသာပြန်ရန် စာရိုက်ပါ။<br>
-                👋 Hi! Type anything to translate.
-            </div>
-            <div class="message-info">
-                <span>Assistant</span>
-                <span class="lang-badge">EN/MY</span>
-            </div>
+            Translate texts instantly! Just type.
+            <div class="msg-time">10:00 AM</div>
         </div>
     </div>
 
-    <div class="input-area">
-        <div class="message-input-wrapper">
-            <textarea id="userInput" placeholder="Write a message..." rows="1"></textarea>
+    <div class="input-container">
+        <div class="input-wrapper">
+            <button class="icon-btn"><i class="far fa-smile"></i></button>
+            <textarea id="userInput" placeholder="Message" rows="1"></textarea>
+            <button class="icon-btn"><i class="fas fa-paperclip"></i></button>
         </div>
-        <button class="send-button" id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
-    </div>
-
-    <div class="status-area" id="statusArea">
-        <i class="fas fa-circle" style="font-size: 0.5rem; color: #20b075;"></i>
-        <span class="status-text" id="statusMessage">✅ Ready</span>
+        <button class="send-btn" id="sendBtn">
+            <i class="fas fa-paper-plane" id="sendIcon"></i>
+        </button>
     </div>
 </div>
 
 <script>
-    (function() {
-        // DOM elements
-        const chatMessages = document.getElementById('chatMessages');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const statusMessage = document.getElementById('statusMessage');
-        const sourceLangBtn = document.getElementById('sourceLangBtn');
-        const targetLangBtn = document.getElementById('targetLangBtn');
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const enMyBtn = document.getElementById('enMyBtn');
+    const myEnBtn = document.getElementById('myEnBtn');
+    const botStatus = document.getElementById('botStatus');
 
-        // State
-        let isEnToMy = true;          // true = EN -> MY , false = MY -> EN
-        let isTranslating = false;
-        let lastScrollPosition = 0;
-        let isUserScrolling = false;
+    let isEnToMy = true;
 
-        // helper: update button active styles
-        function updateLangButtons() {
-            if (isEnToMy) {
-                sourceLangBtn.classList.add('active');
-                targetLangBtn.classList.remove('active');
-            } else {
-                sourceLangBtn.classList.remove('active');
-                targetLangBtn.classList.add('active');
-            }
-        }
+    // Toggle Language
+    enMyBtn.onclick = () => { isEnToMy = true; enMyBtn.classList.add('active'); myEnBtn.classList.remove('active'); };
+    myEnBtn.onclick = () => { isEnToMy = false; myEnBtn.classList.add('active'); enMyBtn.classList.remove('active'); };
 
-        // Enhanced scrollToBottom function with multiple attempts
-        function scrollToBottom(force = true) {
-            if (!force && isUserScrolling) return;
-            
-            // Immediate scroll
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Smooth scroll fallback
-            setTimeout(() => {
-                chatMessages.scrollTo({
-                    top: chatMessages.scrollHeight,
-                    behavior: 'smooth'
-                });
-            }, 10);
-            
-            // Double-check scroll after content renders
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 100);
-        }
+    // Auto-resize textarea
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
 
-        // Detect user scrolling
-        chatMessages.addEventListener('scroll', () => {
-            const currentScroll = chatMessages.scrollTop;
-            const maxScroll = chatMessages.scrollHeight - chatMessages.clientHeight;
-            
-            // If user scrolls up significantly, mark as manual scrolling
-            if (currentScroll < maxScroll - 100) {
-                isUserScrolling = true;
-            } else {
-                isUserScrolling = false;
-            }
-        });
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
 
-        // add message to chat (type: 'user' or 'bot')
-        function addMessage(text, type, sourceLang = '', targetLang = '') {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${type}-message`;
+        // Clear input
+        userInput.value = '';
+        userInput.style.height = 'auto';
 
-            const bubble = document.createElement('div');
-            bubble.className = 'message-bubble';
-            bubble.textContent = text;
-
-            const info = document.createElement('div');
-            info.className = 'message-info';
-
-            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            if (type === 'user') {
-                const badge = document.createElement('span');
-                badge.className = 'lang-badge';
-                badge.textContent = sourceLang || (isEnToMy ? 'EN' : 'MY');
-                info.appendChild(badge);
-
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = timeStr;
-                info.appendChild(timeSpan);
-            } else {
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = timeStr;
-                info.appendChild(timeSpan);
-
-                const badge = document.createElement('span');
-                badge.className = 'lang-badge';
-                badge.textContent = targetLang || (isEnToMy ? 'MY' : 'EN');
-                info.appendChild(badge);
-            }
-
-            msgDiv.appendChild(bubble);
-            msgDiv.appendChild(info);
-            chatMessages.appendChild(msgDiv);
-
-            // Auto-scroll for new messages only if user hasn't manually scrolled up
-            scrollToBottom(false);
-        }
-
-        // typing indicator (as a bot message)
-        function showTypingIndicator() {
-            const indicatorDiv = document.createElement('div');
-            indicatorDiv.className = 'message bot-message';
-            indicatorDiv.id = 'typingIndicator';
-
-            const typingBubble = document.createElement('div');
-            typingBubble.className = 'typing-indicator';
-            typingBubble.innerHTML = '<span></span><span></span><span></span>';
-
-            indicatorDiv.appendChild(typingBubble);
-            chatMessages.appendChild(indicatorDiv);
-            scrollToBottom(false);
-        }
-
-        function removeTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-        }
-
-        // translation using MyMemory (supports en<>my)
-        async function translateText(text) {
+        // Add User Message
+        appendMessage(text, 'user');
+        
+        // Show Typing...
+        botStatus.innerText = 'typing...';
+        
+        try {
             const from = isEnToMy ? 'en' : 'my';
             const to = isEnToMy ? 'my' : 'en';
-
-            if (!text.trim()) return '';
-
-            try {
-                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
-                if (!response.ok) throw new Error('Network issue');
-                const data = await response.json();
-                if (data.responseData && data.responseData.translatedText) {
-                    return data.responseData.translatedText;
-                } else {
-                    return '⚠️ translation error';
-                }
-            } catch (e) {
-                console.error(e);
-                return '❌ connection failed';
-            }
-        }
-
-        // handle send
-        async function handleSendMessage() {
-            const rawMessage = userInput.value.trim();
-            if (!rawMessage || isTranslating) return;
-
-            const messageText = rawMessage;
-            userInput.value = '';
-            userInput.style.height = 'auto';
-
-            // Reset user scroll flag when sending new message
-            isUserScrolling = false;
-
-            // Add user message
-            addMessage(messageText, 'user', isEnToMy ? 'EN' : 'MY');
-
-            // set translating state
-            isTranslating = true;
-            sendBtn.disabled = true;
-            statusMessage.innerText = '⏳ Translating...';
-
-            showTypingIndicator();
-
-            const translated = await translateText(messageText);
-
-            removeTypingIndicator();
-
-            // Add bot response
-            addMessage(translated, 'bot', '', isEnToMy ? 'MY' : 'EN');
-
-            isTranslating = false;
-            sendBtn.disabled = false;
-            statusMessage.innerText = '✅ Ready';
-            userInput.focus();
-
-            // Force scroll to bottom after translation completes
-            setTimeout(() => {
-                scrollToBottom(true);
-            }, 150);
-        }
-
-        // auto-resize textarea
-        function autoResize() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        }
-
-        // Event listeners
-        sendBtn.addEventListener('click', handleSendMessage);
-
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-            }
-        });
-
-        userInput.addEventListener('input', autoResize);
-
-        // language switch
-        sourceLangBtn.addEventListener('click', () => {
-            if (!isEnToMy) {
-                isEnToMy = true;
-                updateLangButtons();
-                statusMessage.innerText = '🌐 EN → MY';
-            }
-        });
-
-        targetLangBtn.addEventListener('click', () => {
-            if (isEnToMy) {
-                isEnToMy = false;
-                updateLangButtons();
-                statusMessage.innerText = '🌐 MY → EN';
-            }
-        });
-
-        // initial update
-        updateLangButtons();
-        userInput.focus();
-
-        // scroll to bottom on window load
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                scrollToBottom(true);
-            }, 100);
-            userInput.focus();
-        });
-
-        // click on messages -> focus input
-        chatMessages.addEventListener('click', () => {
-            userInput.focus();
-        });
-
-        // MutationObserver to ensure scroll when content changes
-        const observer = new MutationObserver((mutations) => {
-            // Check if new messages were added and user hasn't scrolled up
-            const hasNewMessages = mutations.some(m => 
-                m.type === 'childList' && m.addedNodes.length > 0
-            );
+            const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+            const data = await res.json();
             
-            if (hasNewMessages && !isUserScrolling) {
-                scrollToBottom(false);
-            }
-        });
+            appendMessage(data.responseData.translatedText, 'bot');
+        } catch (err) {
+            appendMessage("Error connecting to server.", 'bot');
+        } finally {
+            botStatus.innerText = 'online';
+        }
+    }
+
+    function appendMessage(text, side) {
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${side}-message`;
+        msgDiv.innerHTML = `${text} <div class="msg-time">${time}</div>`;
         
-        observer.observe(chatMessages, { childList: true, subtree: true });
-    })();
+        chatContainer.appendChild(msgDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    sendBtn.onclick = sendMessage;
+    userInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+
 </script>
+
 </body>
 </html>
