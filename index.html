@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Telegram style · EN / MY translator — Premium Translation</title>
-    <!-- Fonts: Roboto + Padauk for Myanmar -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -417,7 +415,6 @@
 
 <script>
     (function() {
-        // ---------- DOM elements ----------
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -427,14 +424,10 @@
         const apiStatusDot = document.getElementById('apiStatusDot');
         const apiStatusText = document.getElementById('apiStatusText');
 
-        // ---------- State ----------
-        let isEnToMy = true;          // true = EN->MY , false = MY->EN
+        let isEnToMy = true;
         let isTranslating = false;
         let isUserScrolling = false;
-        let currentApiProvider = 'google'; // google, deepl, microsoft, mymemory
-        let apiHealthStatus = 'good'; // good, warning, error
 
-        // ---------- Helper: Update UI buttons ----------
         function updateLangButtons() {
             if (isEnToMy) {
                 sourceLangBtn.classList.add('active');
@@ -447,111 +440,55 @@
             }
         }
 
-        // Update API status indicator
         function updateApiStatus(provider, status) {
-            currentApiProvider = provider;
-            apiHealthStatus = status;
-            
-            // Update status dot
             apiStatusDot.className = 'api-status-dot';
             if (status === 'warning') apiStatusDot.classList.add('warning');
             if (status === 'error') apiStatusDot.classList.add('error');
-            
-            // Update status text
-            switch(provider) {
-                case 'google':
-                    apiStatusText.textContent = 'Google API';
-                    break;
-                case 'deepl':
-                    apiStatusText.textContent = 'DeepL API';
-                    break;
-                case 'microsoft':
-                    apiStatusText.textContent = 'MS Translator';
-                    break;
-                case 'mymemory':
-                    apiStatusText.textContent = 'MyMemory API';
-                    break;
-                default:
-                    apiStatusText.textContent = 'Unknown API';
-            }
+            apiStatusText.textContent = provider === 'google' ? 'Google API' : (provider === 'deepl' ? 'DeepL API' : 'Neural API');
         }
 
-        // ---------- Scroll to bottom with smart user detection ----------
         function scrollToBottom(force = false) {
             if (!force && isUserScrolling) return;
-            // immediate + smooth + double guarantee
             chatMessages.scrollTop = chatMessages.scrollHeight;
-            setTimeout(() => {
-                chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-            }, 8);
-            setTimeout(() => {
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }, 80);
+            setTimeout(() => chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' }), 50);
         }
 
-        // Detect user scroll intent
         chatMessages.addEventListener('scroll', () => {
             const { scrollTop, scrollHeight, clientHeight } = chatMessages;
-            const atBottom = scrollTop + clientHeight >= scrollHeight - 90;
-            if (!atBottom) {
-                isUserScrolling = true;
-            } else {
-                isUserScrolling = false;
-            }
+            isUserScrolling = scrollTop + clientHeight < scrollHeight - 90;
         });
 
-        // ---------- Add message to chat UI ----------
         function addMessage(text, type, sourceLangLabel = '', targetLangLabel = '', isError = false) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${type}-message`;
-
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
             bubble.textContent = text;
             if (isError) bubble.classList.add('error-bubble');
-
             const info = document.createElement('div');
             info.className = 'message-info';
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             if (type === 'user') {
-                const badge = document.createElement('span');
-                badge.className = 'lang-badge';
-                badge.textContent = sourceLangLabel || (isEnToMy ? 'EN' : 'MY');
-                info.appendChild(badge);
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = timeStr;
-                info.appendChild(timeSpan);
+                info.innerHTML = `<span class="lang-badge">${sourceLangLabel || (isEnToMy ? 'EN' : 'MY')}</span><span>${timeStr}</span>`;
             } else {
-                const timeSpan = document.createElement('span');
-                timeSpan.textContent = timeStr;
-                info.appendChild(timeSpan);
-                const badge = document.createElement('span');
-                badge.className = 'lang-badge';
-                badge.textContent = targetLangLabel || (isEnToMy ? 'MY' : 'EN');
-                info.appendChild(badge);
+                info.innerHTML = `<span>${timeStr}</span><span class="lang-badge">${targetLangLabel || (isEnToMy ? 'MY' : 'EN')}</span>`;
             }
 
             msgDiv.appendChild(bubble);
             msgDiv.appendChild(info);
             chatMessages.appendChild(msgDiv);
-
-            // auto-scroll only if user not deliberately scrolled up
             scrollToBottom(false);
             return msgDiv;
         }
 
-        // Typing indicator
         function showTypingIndicator() {
             removeTypingIndicator();
-            const indicatorDiv = document.createElement('div');
-            indicatorDiv.className = 'message bot-message';
-            indicatorDiv.id = 'typingIndicator';
-            const typingBubble = document.createElement('div');
-            typingBubble.className = 'typing-indicator';
-            typingBubble.innerHTML = '<span></span><span></span><span></span>';
-            indicatorDiv.appendChild(typingBubble);
-            chatMessages.appendChild(indicatorDiv);
+            const div = document.createElement('div');
+            div.className = 'message bot-message';
+            div.id = 'typingIndicator';
+            div.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            chatMessages.appendChild(div);
             scrollToBottom(false);
         }
 
@@ -560,312 +497,83 @@
             if (existing) existing.remove();
         }
 
-        // ---------- MULTIPLE HIGH QUALITY TRANSLATION APIS ----------
-        // 1. Google Translate via Lingva (free proxy)
-        async function translateWithGoogle(text, fromLang, toLang) {
-            try {
-                // Try multiple Lingva instances for reliability
-                const lingvaInstances = [
-                    'https://lingva.ml',
-                    'https://lingva.garudalinux.org',
-                    'https://translate.plausibility.cloud'
-                ];
-                
-                let lastError;
-                for (const instance of lingvaInstances) {
-                    try {
-                        const apiUrl = `${instance}/api/v1/${fromLang}/${toLang}/${encodeURIComponent(text)}`;
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 5000);
-                        const response = await fetch(apiUrl, { signal: controller.signal });
-                        clearTimeout(timeoutId);
-                        
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const data = await response.json();
-                        if (data && data.translation) {
-                            updateApiStatus('google', 'good');
-                            return data.translation;
-                        }
-                    } catch (err) {
-                        lastError = err;
-                        continue;
-                    }
-                }
-                throw lastError || new Error('All Google Translate instances failed');
-            } catch (err) {
-                console.warn("Google Translate error:", err);
-                updateApiStatus('google', 'error');
-                throw err;
-            }
-        }
-
-        // 2. DeepL API (if available)
-        async function translateWithDeepL(text, fromLang, toLang) {
-            try {
-                // DeepL doesn't have a free public API, but we can try some public proxies
-                const deepLInstances = [
-                    'https://deepl.pon.im/translate'
-                ];
-                
-                for (const instance of deepLInstances) {
-                    try {
-                        const formData = new FormData();
-                        formData.append('text', text);
-                        formData.append('source_lang', fromLang.toUpperCase());
-                        formData.append('target_lang', toLang.toUpperCase());
-                        
-                        const controller = new AbortController();
-                        const timeoutId = setTimeout(() => controller.abort(), 7000);
-                        const response = await fetch(instance, {
-                            method: 'POST',
-                            body: formData,
-                            signal: controller.signal
-                        });
-                        clearTimeout(timeoutId);
-                        
-                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                        const data = await response.json();
-                        if (data && data.translations && data.translations.length > 0) {
-                            updateApiStatus('deepl', 'good');
-                            return data.translations[0].text;
-                        }
-                    } catch (err) {
-                        continue;
-                    }
-                }
-                throw new Error('DeepL API unavailable');
-            } catch (err) {
-                console.warn("DeepL error:", err);
-                updateApiStatus('deepl', 'error');
-                throw err;
-            }
-        }
-
-        // 3. Microsoft Translator (if available)
-        async function translateWithMicrosoft(text, fromLang, toLang) {
-            try {
-                // Using a public proxy for Microsoft Translator
-                const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const response = await fetch(apiUrl, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                if (data.responseData && data.responseData.translatedText) {
-                    updateApiStatus('microsoft', 'good');
-                    return data.responseData.translatedText;
-                } else {
-                    throw new Error('Invalid Microsoft Translator response');
-                }
-            } catch (err) {
-                console.warn("Microsoft Translator error:", err);
-                updateApiStatus('microsoft', 'error');
-                throw err;
-            }
-        }
-
-        // 4. MyMemory (fallback)
-        async function translateWithMyMemory(text, fromLang, toLang) {
-            try {
-                const apiUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const response = await fetch(apiUrl, { signal: controller.signal });
-                clearTimeout(timeoutId);
-                
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const data = await response.json();
-                if (data.responseData && data.responseData.translatedText) {
-                    updateApiStatus('mymemory', 'warning'); // Warning because it's a fallback
-                    return data.responseData.translatedText;
-                } else {
-                    throw new Error('Invalid MyMemory response');
-                }
-            } catch (err) {
-                console.warn("MyMemory error:", err);
-                updateApiStatus('mymemory', 'error');
-                throw err;
-            }
-        }
-
-        // Core translation orchestrator with smart retry & clean output
-        async function performTranslation(rawText) {
-            const fromLang = isEnToMy ? 'en' : 'my';
-            const toLang = isEnToMy ? 'my' : 'en';
-            if (!rawText.trim()) return "";
-
-            // Try different translation services in order of preference
-            let translationServices = [
-                { name: 'Google', func: translateWithGoogle },
-                { name: 'DeepL', func: translateWithDeepL },
-                { name: 'Microsoft', func: translateWithMicrosoft },
-                { name: 'MyMemory', func: translateWithMyMemory }
-            ];
+        // --- Optimized Translation API Caller ---
+        async function performTranslation(text) {
+            const from = isEnToMy ? 'en' : 'my';
+            const to = isEnToMy ? 'my' : 'en';
+            const proxy = 'https://lingva.ml/api/v1/';
             
-            let lastError;
-            for (const service of translationServices) {
-                try {
-                    let translated = await service.func(rawText, fromLang, toLang);
-                    // Post-process: remove accidental double spaces or weird artifacts
-                    if (translated && typeof translated === 'string') {
-                        translated = translated.replace(/\s+/g, ' ').trim();
-                        // if translation seems empty but original not, fallback guard
-                        if (translated === "" && rawText.trim() !== "") {
-                            throw new Error("Empty translation result");
-                        }
-                        return translated;
-                    } else {
-                        throw new Error("Invalid translation");
-                    }
-                } catch (err) {
-                    lastError = err;
-                    console.warn(`${service.name} translation failed:`, err);
-                    continue;
-                }
+            try {
+                const response = await fetch(`${proxy}${from}/${to}/${encodeURIComponent(text)}`);
+                const data = await response.json();
+                return data.translation || null;
+            } catch (err) {
+                // Fallback to MyMemory
+                const fallback = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+                const fallbackData = await fallback.json();
+                return fallbackData.responseData.translatedText;
             }
-            
-            // If all services fail
-            throw lastError || new Error("All translation services failed");
         }
 
-        // ---------- Send message & translation pipeline ----------
         async function handleSendMessage() {
             const rawMessage = userInput.value.trim();
             if (!rawMessage || isTranslating) return;
 
-            // Disable input during process
             isTranslating = true;
             sendBtn.disabled = true;
-            statusMessageSpan.innerHTML = '<i class="fas fa-sync-alt fa-fw"></i> Translating with neural engine...';
-            statusMessageSpan.style.opacity = "0.9";
+            statusMessageSpan.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Translating...';
 
-            // Reset scroll flag when user sends new message
-            isUserScrolling = false;
-
-            // Add user message to chat
-            const sourceLangDisplay = isEnToMy ? '🇬🇧 EN' : '🇲🇲 MY';
-            addMessage(rawMessage, 'user', sourceLangDisplay, '');
-
-            // Clear input and reset height
+            addMessage(rawMessage, 'user', isEnToMy ? '🇬🇧 EN' : '🇲🇲 MY');
             userInput.value = '';
             userInput.style.height = 'auto';
-
-            // Show typing indicator (bot)
             showTypingIndicator();
 
-            let translatedText = "";
-            let translationError = false;
-
             try {
-                translatedText = await performTranslation(rawMessage);
-                if (!translatedText || translatedText.length === 0) {
-                    throw new Error("No translation received");
-                }
+                const result = await performTranslation(rawMessage);
+                removeTypingIndicator();
+                addMessage(result, 'bot', '', isEnToMy ? '🇲🇲 MY' : '🇬🇧 EN');
             } catch (err) {
-                console.error("Translation error:", err);
-                translationError = true;
-                translatedText = `⚠️ Translation failed. Please try again. \n⚠️ ဘာသာပြန်ခြင်း မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ။`;
+                removeTypingIndicator();
+                addMessage('⚠️ Error: Connection failed.', 'bot', '', '', true);
             }
 
-            // Remove typing indicator after response (or error)
-            removeTypingIndicator();
-
-            // Add bot response
-            const targetLangDisplay = isEnToMy ? '🇲🇲 MY' : '🇬🇧 EN';
-            addMessage(translatedText, 'bot', '', targetLangDisplay, translationError);
-
-            // Reset state
             isTranslating = false;
             sendBtn.disabled = false;
             statusMessageSpan.innerHTML = '✅ Ready · Neural Translation Engine';
+            
+            // Critical Fix: Restore focus to keep keyboard open
             userInput.focus();
-
-            // Final forced scroll to ensure new translation visible
-            setTimeout(() => scrollToBottom(true), 120);
+            setTimeout(() => userInput.focus(), 10);
+            scrollToBottom(true);
         }
 
-        // ---------- Auto-resize textarea ----------
-        function autoResizeTextarea() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 130) + 'px';
-        }
+        // --- Fix: Prevent Keyboard Hiding on Click ---
+        sendBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Prevents input from losing focus
+            handleSendMessage();
+        });
 
-        // ---------- Language Switch with confirmation style ----------
-        function setEnToMyMode(active) {
-            if (active === isEnToMy) return;
-            isEnToMy = active;
-            updateLangButtons();
-            statusMessageSpan.innerHTML = isEnToMy ? '🌐 EN → MY (Neural Translation)' : '🌐 MY → EN (Neural Translation)';
-            // brief flash to indicate mode change
-            const statusDiv = document.querySelector('.status-area');
-            statusDiv.style.transition = 'background 0.2s';
-            statusDiv.style.background = '#e9f2fc';
-            setTimeout(() => { statusDiv.style.background = ''; }, 300);
-        }
-
-        // ---------- Event listeners ----------
-        sendBtn.addEventListener('click', handleSendMessage);
-
+        // Maintain Enter key support
         userInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                if (!isTranslating) handleSendMessage();
+                handleSendMessage();
             }
         });
 
-        userInput.addEventListener('input', autoResizeTextarea);
-
-        // Language toggle buttons
-        sourceLangBtn.addEventListener('click', () => {
-            if (!isEnToMy) setEnToMyMode(true);
-        });
-        targetLangBtn.addEventListener('click', () => {
-            if (isEnToMy) setEnToMyMode(false);
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 130) + 'px';
         });
 
-        // focus input when clicking messages
-        chatMessages.addEventListener('click', () => {
-            if (!isTranslating) userInput.focus();
-        });
+        sourceLangBtn.addEventListener('click', () => { isEnToMy = true; updateLangButtons(); });
+        targetLangBtn.addEventListener('click', () => { isEnToMy = false; updateLangButtons(); });
 
-        // Initial setup
-        updateLangButtons();
-        updateApiStatus('google', 'good');
-        userInput.focus();
-
-        // Scroll to bottom on load after welcome message
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                scrollToBottom(true);
-            }, 120);
-            // pre-focus
+            updateLangButtons();
             userInput.focus();
-        });
-
-        // MutationObserver to handle dynamic content scroll for any late images/updates
-        const observer = new MutationObserver((mutations) => {
-            let contentAdded = false;
-            for (let m of mutations) {
-                if (m.type === 'childList' && m.addedNodes.length > 0) {
-                    contentAdded = true;
-                    break;
-                }
-            }
-            if (contentAdded && !isUserScrolling && !isTranslating) {
-                scrollToBottom(false);
-            }
-        });
-        observer.observe(chatMessages, { childList: true, subtree: true });
-
-        // Additional safety: if the input gets disabled, re-enable on focus
-        window.addEventListener('resize', () => {
-            if (chatMessages.scrollHeight > chatMessages.clientHeight && !isUserScrolling) {
-                scrollToBottom(true);
-            }
         });
     })();
 </script>
 </body>
-    </html>
+</html>
